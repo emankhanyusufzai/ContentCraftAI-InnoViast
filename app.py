@@ -21,7 +21,7 @@ from utils.exporters import generate_pdf_bytes
 # ---------------------------------------------------------
 # CONFIG — update this with your actual repo link
 # ---------------------------------------------------------
-GITHUB_REPO_URL = "https://github.com/emankhanyusufzai/ContentCraftAI-InnoViast"
+GITHUB_REPO_URL = "https://github.com/your-username/ContentCraftAI-InnoViast"
 
 st.set_page_config(
     page_title="ContentCraft AI",
@@ -47,6 +47,18 @@ for key, value in defaults.items():
 
 def toggle_theme():
     st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+
+
+def render_html(html: str):
+    """
+    Renders an HTML block safely.
+    Streamlit's markdown parser treats any line indented by 4+ spaces as a
+    code block, which caused raw HTML to appear as visible text. Stripping
+    leading whitespace from every line (while keeping the tags themselves
+    intact) prevents that misinterpretation.
+    """
+    cleaned = "\n".join(line.strip() for line in html.strip().splitlines())
+    st.markdown(cleaned, unsafe_allow_html=True)
 
 
 def open_generator(template_name):
@@ -90,25 +102,23 @@ ACCENTS = {
 }
 
 # Original abstract SVG logo — brain + pen-nib fusion, not a stock emoji/icon
-LOGO_SVG = """
-<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-        <linearGradient id="ccGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#3b5bfd"/>
-            <stop offset="100%" stop-color="#8b3ef0"/>
-        </linearGradient>
-    </defs>
-    <rect width="40" height="40" rx="11" fill="url(#ccGrad)"/>
-    <path d="M12 26 L20 10 L20 18 L28 14 L20 30 L20 22 Z" fill="white" opacity="0.95"/>
-    <circle cx="12" cy="26" r="2" fill="white"/>
-    <circle cx="28" cy="14" r="2" fill="white"/>
-</svg>
-"""
+LOGO_SVG = (
+    '<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'
+    '<defs><linearGradient id="ccGrad" x1="0%" y1="0%" x2="100%" y2="100%">'
+    '<stop offset="0%" stop-color="#3b5bfd"/>'
+    '<stop offset="100%" stop-color="#8b3ef0"/>'
+    '</linearGradient></defs>'
+    '<rect width="40" height="40" rx="11" fill="url(#ccGrad)"/>'
+    '<path d="M12 26 L20 10 L20 18 L28 14 L20 30 L20 22 Z" fill="white" opacity="0.95"/>'
+    '<circle cx="12" cy="26" r="2" fill="white"/>'
+    '<circle cx="28" cy="14" r="2" fill="white"/>'
+    '</svg>'
+)
 
 # ---------------------------------------------------------
 # GLOBAL CSS
 # ---------------------------------------------------------
-st.markdown(
+render_html(
     f"""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -172,6 +182,10 @@ st.markdown(
             font-weight: 700;
             margin: 0 0 6px 0;
             position: relative;
+        }}
+
+        .cc-hero h1 a, a.anchor-link {{
+            display: none !important;
         }}
 
         .cc-hero p {{
@@ -361,8 +375,7 @@ st.markdown(
             .cc-hero p {{ font-size: 12px; }}
         }}
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 # ---------------------------------------------------------
@@ -370,7 +383,7 @@ st.markdown(
 # ---------------------------------------------------------
 top_left, top_right = st.columns([5, 1.6])
 with top_left:
-    st.markdown(
+    render_html(
         f"""
         <div class="cc-brand">
             {LOGO_SVG}
@@ -379,8 +392,7 @@ with top_left:
                 <div class="cc-brand-tag">Your AI-Powered Content Writing Studio</div>
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 with top_right:
     theme_icon = "☀️ Light" if st.session_state.theme == "dark" else "🌙 Dark"
@@ -397,14 +409,13 @@ with top_right:
 # ===========================================================
 if st.session_state.view == "gallery":
 
-    st.markdown(
+    render_html(
         """
         <div class="cc-hero">
             <h1>Create High-Quality AI Content in Seconds</h1>
             <p>Generate blogs, LinkedIn posts, emails, captions, ads and product descriptions using AI.</p>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     names = get_template_names()
@@ -414,7 +425,7 @@ if st.session_state.view == "gallery":
         info = get_template_info(name)
         accent = ACCENTS.get(name, "#3b5bfd")
         with cols[i % 3]:
-            st.markdown(
+            render_html(
                 f"""
                 <div class="cc-card">
                     <div class="cc-icon-box" style="background:{accent}22; color:{accent};">
@@ -423,8 +434,7 @@ if st.session_state.view == "gallery":
                     <div class="cc-card-title">{name}</div>
                     <div class="cc-card-desc">{info['description']}</div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
             st.button(
                 "🚀 Start Writing",
@@ -439,23 +449,21 @@ if st.session_state.view == "gallery":
     if st.session_state.history:
         with st.expander(f"🕘 History ({len(st.session_state.history)})"):
             for item in reversed(st.session_state.history[-10:]):
-                st.markdown(
+                render_html(
                     f"""
                     <div class="cc-history-item">
                         <div class="cc-history-title">{item['template']}</div>
                         <div class="cc-history-sub">{item['topic'][:80]}</div>
                     </div>
-                    """,
-                    unsafe_allow_html=True,
+                    """
                 )
 
-    st.markdown(
+    render_html(
         """
         <div class="cc-footer">
             © 2026 ContentCraft AI · Built with Streamlit + Google Gemini
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 # ===========================================================
@@ -470,15 +478,14 @@ else:
     st.button("← Back to templates", on_click=back_to_gallery, key="back_btn")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown(
+    render_html(
         f"""
         <div class="cc-hero">
             <span class="cc-pill" style="background:{accent};">{info['icon']} {selected}</span>
             <h1 style="margin-top:14px;">{selected}</h1>
             <p>{info['description']}</p>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     col_main, col_settings = st.columns([2, 1])
@@ -559,15 +566,14 @@ else:
         st.markdown("**📄 Result**")
         st.markdown(f"<div class='cc-result'>{content}</div>", unsafe_allow_html=True)
 
-        st.markdown(
+        render_html(
             f"""
             <div class="cc-stats-row">
                 <div class="cc-stat"><b>{words}</b>Words</div>
                 <div class="cc-stat"><b>{chars}</b>Characters</div>
                 <div class="cc-stat"><b>{reading_time} min</b>Reading time</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
         st.write("")
@@ -579,17 +585,22 @@ else:
             safe_content = json.dumps(content)
             st.components.v1.html(
                 f"""
-                <button onclick="navigator.clipboard.writeText({safe_content});
-                    this.innerText='✅ Copied!';
-                    setTimeout(()=>this.innerText='📋 Copy', 1500);"
-                    style="width:100%; padding:8px 14px; border-radius:10px; border:none;
-                    background:linear-gradient(120deg,#3b5bfd,#8b3ef0); color:white;
-                    font-weight:600; font-size:13px; cursor:pointer; font-family:Inter,sans-serif;">
-                    📋 Copy
-                </button>
-                """,
-                height=42,
-            )
+        <button id="copyBtn" style="width:100%; padding:8px 14px; border-radius:10px; border:none;
+            background:linear-gradient(120deg,#3b5bfd,#8b3ef0); color:white;
+            font-weight:600; font-size:13px; cursor:pointer; font-family:Inter,sans-serif;">
+            📋 Copy
+        </button>
+        <script>
+        const textToCopy = {safe_content};
+        document.getElementById('copyBtn').addEventListener('click', function() {{
+            navigator.clipboard.writeText(textToCopy);
+            this.innerText = '✅ Copied!';
+            setTimeout(() => this.innerText = '📋 Copy', 1500);
+        }});
+        </script>
+        """,
+        height=42,
+    )
 
         with dl_col1:
             st.download_button(
@@ -625,21 +636,19 @@ else:
 
     else:
         # Empty state before first generation
-        st.markdown(
+        render_html(
             """
             <div class="cc-empty-state">
                 <div class="cc-empty-icon">✨</div>
                 <div>Generate your first content to see it here.</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-    st.markdown(
+    render_html(
         """
         <div class="cc-footer">
             © 2026 ContentCraft AI · Built with Streamlit + Google Gemini
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
