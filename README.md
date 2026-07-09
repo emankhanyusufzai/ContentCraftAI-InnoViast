@@ -100,19 +100,16 @@ ContentCraftAI-InnoViast/
 
 ## 🖼️ Screenshots
 
-> _Screenshots are stored in `assets/screenshots/` — replace the placeholder filenames below with your actual exported images._
-
 | | |
 |---|---|
 | **Gallery View (Dark Mode)** | **Gallery View (Light Mode)** |
-| ![Gallery Dark](assets/screenshots/gallery-dark.png) | ![Gallery Light](assets/screenshots/gallery-light.png) |
+| ![Gallery Dark](assets/screenshots/screenshot-1-gallery-dark.png) | ![Gallery Light](assets/screenshots/screenshot-2-gallery-light.png) |
 | **Generator View — Customize Panel** | **Prompt Strategy Preview** |
-| ![Generator](assets/screenshots/generator.png) | ![Prompt Strategy](assets/screenshots/prompt-strategy.png) |
+| ![Generator](assets/screenshots/screenshot-3-generator.png) | ![Prompt Strategy](assets/screenshots/screenshot-4-prompt-strategy.png) |
 | **Generated Result + Stats** | **Export Options (Copy / TXT / MD / PDF)** |
-| ![Result](assets/screenshots/result.png) | ![Export Options](assets/screenshots/export-options.png) |
+| ![Result](assets/screenshots/screenshot-5-result.png) | ![Export Options](assets/screenshots/screenshot-6-export-options.png) |
 | **History Panel** | |
-| ![History](assets/screenshots/history.png) | |
-
+| ![History](assets/screenshots/screenshot-7-history.png) | |
 ---
 
 ## 🧠 Prompt Strategy
