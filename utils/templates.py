@@ -39,6 +39,7 @@ TONES = ["Professional", "Casual", "Friendly", "Persuasive", "Formal"]
 LENGTHS = ["Short", "Medium", "Long"]
 AUDIENCES = ["General", "Business", "Students", "Marketers"]
 OUTPUT_FORMATS = ["Plain Text", "Markdown"]
+LANGUAGES = ["English", "Roman Urdu"]
 
 
 def get_template_names():
@@ -51,7 +52,8 @@ def get_template_info(template_name):
     return TEMPLATES.get(template_name, {})
 
 
-def build_prompt(template_name, topic, tone, length, audience, output_format):
+def build_prompt(template_name, topic, tone, length, audience, output_format,
+                  language="English", include_seo=False):
     """
     Builds the final prompt string sent to Gemini API,
     based on selected template + controls.
@@ -102,10 +104,25 @@ def build_prompt(template_name, topic, tone, length, audience, output_format):
 
     instruction = base_instructions.get(template_name, f"Write content about: {topic}")
 
+    language_instruction = (
+        "Write the entire content in Roman Urdu (Urdu language written using English/Latin letters)."
+        if language == "Roman Urdu"
+        else "Write the content in English."
+    )
+
+    seo_instruction = (
+        "\nAt the very end, add a section titled 'SEO Keywords:' followed by 5-6 "
+        "relevant, comma-separated SEO keywords for this content."
+        if include_seo
+        else ""
+    )
+
     prompt = (
         f"{instruction}\n\n"
         f"Target audience: {audience}.\n"
-        f"{format_instruction}\n"
+        f"{language_instruction}\n"
+        f"{format_instruction}"
+        f"{seo_instruction}\n"
         f"Do not include any explanations or notes outside the content itself."
     )
 

@@ -13,6 +13,7 @@ from utils.templates import (
     LENGTHS,
     AUDIENCES,
     OUTPUT_FORMATS,
+    LANGUAGES,
 )
 from utils.content_generator import generate_content
 from utils.error_handler import validate_input
@@ -21,7 +22,7 @@ from utils.exporters import generate_pdf_bytes
 # ---------------------------------------------------------
 # CONFIG — update this with your actual repo link
 # ---------------------------------------------------------
-GITHUB_REPO_URL = "https://github.com/your-username/ContentCraftAI-InnoViast"
+GITHUB_REPO_URL = "https://github.com/emankhanyusufzai/ContentCraftAI-InnoViast"
 
 st.set_page_config(
     page_title="ContentCraft AI",
@@ -38,7 +39,9 @@ defaults = {
     "view": "gallery",
     "selected_template": get_template_names()[0],
     "generated_content": "",
+    "edited_content": "",
     "history": [],
+    "last_params": None,  # stores (topic, tone, length, audience, format, lang, seo) for Regenerate
 }
 for key, value in defaults.items():
     if key not in st.session_state:
@@ -65,10 +68,52 @@ def open_generator(template_name):
     st.session_state.selected_template = template_name
     st.session_state.view = "generator"
     st.session_state.generated_content = ""
+    st.session_state.edited_content = ""
 
 
 def back_to_gallery():
     st.session_state.view = "gallery"
+
+
+def load_history_item(item):
+    st.session_state.selected_template = item["template"]
+    st.session_state.view = "generator"
+    st.session_state.generated_content = item["content"]
+    st.session_state.edited_content = item["content"]
+
+
+def run_generation(template_name, topic, tone, length, audience, output_format, language, include_seo, animate=True):
+    """Shared generation logic used by both Generate and Regenerate."""
+    with st.spinner("Crafting your content..."):
+        success, result = generate_content(
+            template_name, topic, tone, length, audience, output_format,
+            language=language, include_seo=include_seo,
+        )
+
+    if not success:
+        st.error(result)
+        return
+
+    if animate:
+        placeholder = st.empty()
+        displayed = ""
+        step = max(1, len(result) // 150)
+        for i in range(0, len(result), step):
+            displayed = result[: i + step]
+            placeholder.markdown(
+                f"<div class='cc-result'>{displayed}▌</div>",
+                unsafe_allow_html=True,
+            )
+            time.sleep(0.008)
+
+    st.session_state.generated_content = result
+    st.session_state.edited_content = result
+    st.session_state.last_params = {
+        "topic": topic, "tone": tone, "length": length, "audience": audience,
+        "output_format": output_format, "language": language, "include_seo": include_seo,
+    }
+    st.session_state.history.append({"template": template_name, "topic": topic, "content": result})
+    st.rerun()
 
 
 # ---------------------------------------------------------
@@ -100,6 +145,8 @@ ACCENTS = {
     "Product Description": "#a855f7",
     "LinkedIn Post": "#06b6d4",
 }
+
+POPULAR = {"Blog Post", "Social Media Caption"}
 
 # Original abstract SVG logo — brain + pen-nib fusion, not a stock emoji/icon
 LOGO_SVG = (
@@ -140,6 +187,7 @@ render_html(
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }}
 
         .cc-brand-name {{
@@ -174,6 +222,12 @@ render_html(
             height: 220px;
             border-radius: 50%;
             background: {grad_soft};
+            animation: ccPulse 6s ease-in-out infinite;
+        }}
+
+        @keyframes ccPulse {{
+            0%, 100% {{ transform: scale(1); opacity: 0.8; }}
+            50% {{ transform: scale(1.15); opacity: 1; }}
         }}
 
         .cc-hero h1 {{
@@ -195,12 +249,30 @@ render_html(
             position: relative;
         }}
 
+        .cc-hero-stats {{
+            display: flex;
+            gap: 18px;
+            margin-top: 14px;
+            position: relative;
+            flex-wrap: wrap;
+        }}
+
+        .cc-hero-stat {{
+            font-size: 11.5px;
+            color: {subtext};
+            background: {surface_alt};
+            border: 1px solid {border};
+            padding: 4px 12px;
+            border-radius: 20px;
+        }}
+
         .cc-card {{
             background: {surface};
             border: 1px solid {border};
             border-radius: 18px;
             padding: 22px 20px 18px 20px;
             height: 100%;
+            position: relative;
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }}
 
@@ -208,6 +280,19 @@ render_html(
             transform: translateY(-6px);
             box-shadow: 0 12px 30px rgba(59,91,253,0.18);
             border-color: #8b3ef0;
+        }}
+
+        .cc-popular-badge {{
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: {grad};
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
         }}
 
         .cc-icon-box {{
@@ -289,6 +374,7 @@ render_html(
             margin-top: 12px;
             padding-top: 12px;
             border-top: 1px solid {border};
+            flex-wrap: wrap;
         }}
 
         .cc-stat {{
@@ -338,6 +424,18 @@ render_html(
         .cc-history-sub {{
             font-size: 11.5px;
             color: {subtext};
+        }}
+
+        .cc-counter-row {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: -8px;
+            margin-bottom: 12px;
+        }}
+
+        .cc-counter-text {{
+            font-size: 12px;
         }}
 
         /* ---------- RESPONSIVE BREAKPOINTS ---------- */
@@ -410,10 +508,15 @@ with top_right:
 if st.session_state.view == "gallery":
 
     render_html(
-        """
+        f"""
         <div class="cc-hero">
             <h1>Create High-Quality AI Content in Seconds</h1>
             <p>Generate blogs, LinkedIn posts, emails, captions, ads and product descriptions using AI.</p>
+            <div class="cc-hero-stats">
+                <span class="cc-hero-stat">✨ 6 Templates</span>
+                <span class="cc-hero-stat">🌐 2 Languages</span>
+                <span class="cc-hero-stat">♾️ Unlimited Generations</span>
+            </div>
         </div>
         """
     )
@@ -424,10 +527,12 @@ if st.session_state.view == "gallery":
     for i, name in enumerate(names):
         info = get_template_info(name)
         accent = ACCENTS.get(name, "#3b5bfd")
+        badge_html = '<div class="cc-popular-badge">POPULAR</div>' if name in POPULAR else ""
         with cols[i % 3]:
             render_html(
                 f"""
                 <div class="cc-card">
+                    {badge_html}
                     <div class="cc-icon-box" style="background:{accent}22; color:{accent};">
                         {info['icon']}
                     </div>
@@ -445,18 +550,28 @@ if st.session_state.view == "gallery":
             )
             st.write("")
 
-    # History section on gallery page
+    # History section — clickable to reload past content
     if st.session_state.history:
         with st.expander(f"🕘 History ({len(st.session_state.history)})"):
-            for item in reversed(st.session_state.history[-10:]):
-                render_html(
-                    f"""
-                    <div class="cc-history-item">
-                        <div class="cc-history-title">{item['template']}</div>
-                        <div class="cc-history-sub">{item['topic'][:80]}</div>
-                    </div>
-                    """
-                )
+            for idx, item in enumerate(reversed(st.session_state.history[-10:])):
+                hcol1, hcol2 = st.columns([4, 1])
+                with hcol1:
+                    render_html(
+                        f"""
+                        <div class="cc-history-item">
+                            <div class="cc-history-title">{item['template']}</div>
+                            <div class="cc-history-sub">{item['topic'][:80]}</div>
+                        </div>
+                        """
+                    )
+                with hcol2:
+                    st.button(
+                        "View →",
+                        key=f"hist_{idx}",
+                        on_click=load_history_item,
+                        args=(item,),
+                        use_container_width=True,
+                    )
 
     render_html(
         """
@@ -498,7 +613,25 @@ else:
             placeholder=info["placeholder"],
             height=130,
             label_visibility="collapsed",
+            max_chars=500,
+            key=f"topic_input_{selected}",
         )
+
+        # Real-time word/character counter with color-coded limit warning
+        char_count = len(topic)
+        word_count = len(topic.split()) if topic.strip() else 0
+        pct = char_count / 500
+        bar_color = "#22c55e" if pct < 0.7 else ("#f59e0b" if pct < 0.9 else "#ef4444")
+
+        render_html(
+            f"""
+            <div class="cc-counter-row">
+                <span class="cc-counter-text" style="color:{subtext};">{word_count} words</span>
+                <span class="cc-counter-text" style="color:{bar_color}; font-weight:600;">{char_count}/500 characters</span>
+            </div>
+            """
+        )
+
         generate_clicked = st.button("✨ Generate")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -509,6 +642,8 @@ else:
         length = st.selectbox("Length", LENGTHS, index=1)
         audience = st.selectbox("Audience", AUDIENCES)
         output_format = st.selectbox("Format", OUTPUT_FORMATS)
+        language = st.selectbox("🌐 Language", LANGUAGES)
+        include_seo = st.checkbox("🏷️ Include SEO Keywords")
         st.markdown("</div>", unsafe_allow_html=True)
 
         # Prompt Preview — shows mentor exactly what's sent to Gemini
@@ -517,54 +652,52 @@ else:
                 selected,
                 topic if topic else info["placeholder"],
                 tone, length, audience, output_format,
+                language=language, include_seo=include_seo,
             )
             st.code(preview_prompt, language="text")
 
     # -------------------------------------------------------
-    # GENERATE + TYPEWRITER EFFECT
+    # GENERATE
     # -------------------------------------------------------
     if generate_clicked:
         is_valid, error_msg = validate_input(topic)
         if not is_valid:
             st.warning(error_msg)
         else:
-            with st.spinner("Crafting your content..."):
-                success, result = generate_content(
-                    selected, topic, tone, length, audience, output_format
-                )
-
-            if success:
-                placeholder = st.empty()
-                displayed = ""
-                step = max(1, len(result) // 150)
-                for i in range(0, len(result), step):
-                    displayed = result[: i + step]
-                    placeholder.markdown(
-                        f"<div class='cc-result'>{displayed}▌</div>",
-                        unsafe_allow_html=True,
-                    )
-                    time.sleep(0.008)
-
-                st.session_state.generated_content = result
-                st.session_state.history.append(
-                    {"template": selected, "topic": topic, "content": result}
-                )
-                st.rerun()
-            else:
-                st.error(result)
+            run_generation(selected, topic, tone, length, audience, output_format, language, include_seo)
 
     # -------------------------------------------------------
-    # RESULT DISPLAY (after rerun, or on revisit)
+    # RESULT DISPLAY — editable, with regenerate + exports
     # -------------------------------------------------------
     if st.session_state.generated_content:
         content = st.session_state.generated_content
-        words = len(content.split())
-        chars = len(content)
-        reading_time = max(1, round(words / 200))
 
         st.write("")
-        st.markdown("**📄 Result**")
-        st.markdown(f"<div class='cc-result'>{content}</div>", unsafe_allow_html=True)
+        result_col, regen_col = st.columns([4, 1])
+        with result_col:
+            st.markdown("**📄 Result** — edit freely before downloading")
+        with regen_col:
+            regen_clicked = st.button("🔄 Regenerate", use_container_width=True)
+
+        if regen_clicked and st.session_state.last_params:
+            p = st.session_state.last_params
+            run_generation(
+                selected, p["topic"], p["tone"], p["length"], p["audience"],
+                p["output_format"], p["language"], p["include_seo"], animate=True,
+            )
+
+        edited = st.text_area(
+            "Edit content",
+            value=st.session_state.edited_content or content,
+            height=260,
+            label_visibility="collapsed",
+            key="editable_result",
+        )
+        st.session_state.edited_content = edited
+
+        words = len(edited.split())
+        chars = len(edited)
+        reading_time = max(1, round(words / 200))
 
         render_html(
             f"""
@@ -578,41 +711,40 @@ else:
 
         st.write("")
 
-        # Copy button (JS clipboard)
         copy_col, dl_col1, dl_col2, dl_col3 = st.columns([1, 1, 1, 1])
 
         with copy_col:
-            safe_content = json.dumps(content)
+            safe_content = json.dumps(edited)
             st.components.v1.html(
                 f"""
-        <button id="copyBtn" style="width:100%; padding:8px 14px; border-radius:10px; border:none;
-            background:linear-gradient(120deg,#3b5bfd,#8b3ef0); color:white;
-            font-weight:600; font-size:13px; cursor:pointer; font-family:Inter,sans-serif;">
-            📋 Copy
-        </button>
-        <script>
-        const textToCopy = {safe_content};
-        document.getElementById('copyBtn').addEventListener('click', function() {{
-            navigator.clipboard.writeText(textToCopy);
-            this.innerText = '✅ Copied!';
-            setTimeout(() => this.innerText = '📋 Copy', 1500);
-        }});
-        </script>
-        """,
-        height=42,
-    )
+                <button id="copyBtn" style="width:100%; padding:8px 14px; border-radius:10px; border:none;
+                    background:linear-gradient(120deg,#3b5bfd,#8b3ef0); color:white;
+                    font-weight:600; font-size:13px; cursor:pointer; font-family:Inter,sans-serif;">
+                    📋 Copy
+                </button>
+                <script>
+                const textToCopy = {safe_content};
+                document.getElementById('copyBtn').addEventListener('click', function() {{
+                    navigator.clipboard.writeText(textToCopy);
+                    this.innerText = '✅ Copied!';
+                    setTimeout(() => this.innerText = '📋 Copy', 1500);
+                }});
+                </script>
+                """,
+                height=42,
+            )
 
         with dl_col1:
             st.download_button(
                 "⬇️ .txt",
-                data=content,
+                data=edited,
                 file_name=f"{selected.replace(' ', '_').lower()}.txt",
                 mime="text/plain",
                 use_container_width=True,
             )
 
         with dl_col2:
-            md_content = f"# {selected}\n\n{content}"
+            md_content = f"# {selected}\n\n{edited}"
             st.download_button(
                 "⬇️ .md",
                 data=md_content,
@@ -623,7 +755,7 @@ else:
 
         with dl_col3:
             try:
-                pdf_bytes = generate_pdf_bytes(selected, content)
+                pdf_bytes = generate_pdf_bytes(selected, edited)
                 st.download_button(
                     "⬇️ .pdf",
                     data=pdf_bytes,
@@ -631,11 +763,12 @@ else:
                     mime="application/pdf",
                     use_container_width=True,
                 )
-            except Exception:
-                st.caption("PDF export unavailable — install fpdf2")
+            except ModuleNotFoundError:
+                st.caption("PDF export unavailable — run: pip install fpdf2")
+            except Exception as e:
+                st.caption(f"⚠️ PDF error: {type(e).__name__}: {e}")
 
     else:
-        # Empty state before first generation
         render_html(
             """
             <div class="cc-empty-state">
