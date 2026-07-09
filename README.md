@@ -10,21 +10,27 @@ A Streamlit-based content generation tool that uses Google Gemini to create high
 
 ## 📌 Problem Statement
 
-Creating consistent, high-quality content across different formats (blogs, social captions, ads, emails, etc.) is time-consuming and requires switching context between tone, audience, and structure for each piece. ContentCraft AI solves this by giving users a single studio where they pick a content type, customize tone/length/audience/format, and get AI-generated, ready-to-use content in seconds — fully editable and exportable.
+Creating consistent, high-quality content across different formats (blogs, social captions, ads, emails, etc.) is time-consuming and requires switching context between tone, audience, and structure for each piece. ContentCraft AI solves this by giving users a single studio where they pick a content type, customize tone/length/audience/format/language, and get AI-generated, ready-to-use content in seconds — fully editable and exportable.
 
 ---
 
 ## ✨ Features
 
-- **6 Content Templates:** Blog Post, Social Media Caption, Ad Copy, Email, Product Description, LinkedIn Post
-- **Customization Controls:** Tone, Length, Audience, and Output Format for every template
-- **Gemini API Integration:** Real-time content generation using `gemini-2.5-flash`
-- **Copy to Clipboard:** One-click copy of generated content
-- **Export Options:** Download content as `.txt`, `.md` (Markdown), or `.pdf`
-- **History:** Tracks the last 10 generations (template + topic) in-session
-- **Error Handling:** Input validation (empty/too short/too long topics) and friendly API error messages (rate limits, network issues, safety filters)
-- **Prompt Transparency:** "Prompt Strategy" panel shows mentors exactly what prompt is sent to Gemini
-- **Dark / Light Theme Toggle:** Premium SaaS-style UI with a custom AI Brain + Pen Nib logo, blue-purple gradient accents
+- 🎨 Modern Dark & Light UI
+- 🤖 Google Gemini 2.5 Flash Integration
+- 📝 6 AI Content Templates
+- 🌐 English & Roman Urdu Support
+- 🎭 Multiple Tone, Length & Audience Options
+- 🔍 Prompt Strategy Preview
+- 🏷️ Optional SEO Keywords Generation
+- 📊 Live Word, Character & Reading Time Stats
+- ✏️ Editable AI Output
+- 🔄 Regenerate Content
+- 🕘 History (Last 10 Generations)
+- 📋 Copy to Clipboard
+- 📥 Export as TXT, Markdown & PDF
+- 📱 Fully Responsive Design
+- ⚠️ Robust Input Validation & Error Handling
 
 ---
 
@@ -94,17 +100,24 @@ ContentCraftAI-InnoViast/
 
 ## 🖼️ Screenshots
 
-> _Add screenshots here from `assets/screenshots/` — e.g. gallery view, generator view, generated result with copy/download buttons._
+> _Screenshots are stored in `assets/screenshots/` — replace the placeholder filenames below with your actual exported images._
 
-| Gallery View | Generator View |
+| | |
 |---|---|
-| ![Gallery](assets/screenshots/gallery.png) | ![Generator](assets/screenshots/generator.png) |
+| **Gallery View (Dark Mode)** | **Gallery View (Light Mode)** |
+| ![Gallery Dark](assets/screenshots/gallery-dark.png) | ![Gallery Light](assets/screenshots/gallery-light.png) |
+| **Generator View — Customize Panel** | **Prompt Strategy Preview** |
+| ![Generator](assets/screenshots/generator.png) | ![Prompt Strategy](assets/screenshots/prompt-strategy.png) |
+| **Generated Result + Stats** | **Export Options (Copy / TXT / MD / PDF)** |
+| ![Result](assets/screenshots/result.png) | ![Export Options](assets/screenshots/export-options.png) |
+| **History Panel** | |
+| ![History](assets/screenshots/history.png) | |
 
 ---
 
 ## 🧠 Prompt Strategy
 
-Each template builds a structured prompt combining: content type, topic, tone, length, audience, and output format. This is visible live in the app under **"Prompt Strategy (for mentor review)"** on the generator page. Prompt iterations and reasoning are documented in [`AI_USAGE.md`](./AI_USAGE.md).
+Each template builds a structured prompt combining: content type, topic, tone, length, audience, language, and output format — with an optional instruction to append SEO keywords. This is visible live in the app under **"Prompt Strategy (for mentor review)"** on the generator page, so the exact text sent to Gemini is fully transparent. Prompt iterations and reasoning are documented in [`AI_USAGE.md`](./AI_USAGE.md).
 
 ---
 
@@ -112,10 +125,11 @@ Each template builds a structured prompt combining: content type, topic, tone, l
 
 - Integrated a third-party LLM API (Google Gemini) into a Python web app end-to-end
 - Learned to debug Streamlit-specific rendering quirks (HTML/Markdown code-block misinterpretation)
-- Handled real-world API lifecycle issues (model deprecation, migrating from `gemini-1.5-flash` to `gemini-2.5-flash`)
+- Handled real-world API lifecycle issues (model deprecation, migrating from `gemini-1.5-flash` → `gemini-2.5-flash`, and SDK migration from the deprecated `google-generativeai` package to the new `google-genai` SDK)
+- Debugged a real PDF-generation library bug (`fpdf2` cursor positioning) by isolating the failure with targeted diagnostics
 - Implemented clipboard interaction via embedded JavaScript in a Python-rendered app
 - Practiced clean error handling separating validation errors from API/network errors
-- Deployed and managed secrets on Streamlit Community Cloud
+- Deployed and managed secrets on Streamlit Community Cloud, including handling GitHub push protection for accidentally-tracked secrets
 
 ---
 
